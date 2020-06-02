@@ -6,13 +6,14 @@
 ###The PCA analysis needed logistical tranformation
 
 getwd()
-setwd(dir="C:/Users/Aurelio Diaz/OneDrive - Universidad de Córdoba/Doctorado/Iberian_forest/Vegetal_Digestions/Repository/quercus_digestions/Inputs_database")
+setwd(dir="C:/Users/Aurelio Diaz/Documents/Onedrive_Aurelio/OneDrive/Doctorate/quercus_informations/Inputs_database")
 
 datdig <- read.table("190520_Resultados_analisis.csv", sep = ";", header = T, dec = ",")
 str(datdig)
 head(datdig)
 
-
+#insert new dataframe with biomass informations
+plot30<-read.csv("plot30.csv")
 
 #para poder juntar varias columnas las he de transformar pues los vectores factores no se juntan 
 #con otros por lo que hay que transformar a caracter los dos para despues juntarlos
