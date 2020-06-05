@@ -32,6 +32,7 @@ rownames(datdig1)=datdig1$Local
 head(datdig1)
 datdig1<-datdig1[,-(1:2)]
 head(datdig1)
+names(datdig1)
 
 #analisis de anova
 #para eso el vector Parcela debe estar como caracter sino no lo separar? en niveles o factores
@@ -145,8 +146,108 @@ lillie.test(datdig1.log$Zn)#cumple
 
 #vamos usar el codigo prcomp con las nuevas variables donde 
 #ha mejorado el % de los Pc
-res.pca<-prcomp(datdig1.log, scale=T)
+res.pca<-prcomp(datdig1.log, scale=T, center = T)
+print(res.pca)
+summary(res.pca)
+plot(res.pca)
 
+parce<-datdig$Parcela
+
+ss<-get_eigenvalue(res.pca)
+var.contri<-get_pca_var(res.pca) ## variable contributioin to the PCA 
+var.contri$contrib
+var.contri$coord
+var.contri$cos2
+var.contri$cor
+
+ind.contrib <- get_pca_ind(res.pca) ## Individual contribution to the PCA
+ind.contrib$contrib
+ind.contrib$coord
+ind.contrib$cos2
+
+ind.datdig1<-cbind(ind.contrib$coord, parce)
+ind.datdig1<-as.data.frame(ind.datdig1)
+ind.datdig1$parce<-as.factor(ind.datdig1$parce)
+ind.datdig1$Dim.1<-as.numeric((ind.datdig1$Dim.1))
+ind.datdig1$Dim.2<-as.numeric((ind.datdig1$Dim.2))
+
+print(ind.datdig1)
+
+#Anova between plots (ind) and pca 
+Anova.dim1<-aov(Dim.1~parce,data=ind.datdig1) #dim.1 like PCA1
+Anova.dim1
+
+str(ind.datdig1)
+summary(Anova.dim1)
+TukeyHSD(Anova.dim1)
+anova.groups.1<-HSD.test(Anova.dim1, "parce", group=TRUE)
+anova.groups.1
+PCA1<-anova.groups.1$groups
+
+#now, apply the same code for the PCA2(dim.2)
+Anova.dim2<-aov(Dim.2~parce,data=ind.datdig1) #Dim.2 like PCA2
+Anova.dim2
+
+summary(Anova.dim2)
+TukeyHSD(Anova.dim2)
+anova.groups.2<-HSD.test(Anova.dim2, "parce", group=TRUE)
+anova.groups.2
+PCA2<-anova.groups.2$groups
+
+
+IndiS <- Indi
+
+g<- ggbiplot(res.pca, obs.scale = 1, var.scale = 1, 
+              groups = datdig$Parcela, ellipse = TRUE, 
+              circle = FALSE, repel =TRUE)
+g<- g + labs(x=expression(PCA[1]~~group("(",63.3~"%",")")),
+             y= expression(PCA[2]~~group("(",12.6~"%",")")))
+g<-g+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  ## delete background
+           panel.background = element_blank(), axis.line = element_line(colour = "black"),
+           axis.text=element_text(size=16),
+           legend.text=element_text(size=16),
+           legend.direction = 'horizontal',
+           legend.position="top",
+           axis.title.x=element_text(size=16),
+           axis.title.y=element_text(size=16)
+)
+
+g <- g + scale_x_continuous(limits = c(-7,7))
+g<- g + scale_color_brewer(palette="Paired")
+g<-g + annotate("text", label="ND", y=-1.05, x= -6.2, colour= "red", size =2) 
+g<-g+ annotate("text", label="PI", y=-0.87, x=-6.2, colour= "red", size =2)
+g<-g + annotate("text", label="NW", y=-0.52, x=-6.2, colour= "red", size =2)
+g<-g + annotate("text", label="QS", y=-0.02, x=-6.2, colour= "red", size =2)
+g<-g + annotate("text", label="RS", y=0.19, x=-6.2, colour= "red", size =2)
+g<-g + annotate("text", label="RI", y=0.34, x=-6.2, colour= "red", size =2)
+g<-g+ annotate("text", label="LO", y=0.86, x=-6.2, colour= "red", size =2)
+g<-g+ annotate("text", label="IT", y=1.12, x=-6.2, colour= "red", size =2)
+
+g<-g + annotate("text", label="ND", y=-3, x=-2.2, colour= "red", size =2) 
+g<-g+ annotate("text", label="PI", y=-3, x=0.74, colour= "red", size =2)
+g<-g + annotate("text", label="NW", y=-3, x=-1.6, colour= "red", size =2)
+g<-g + annotate("text", label="QS", y=-3, x=-2.6, colour= "red", size =2)
+g<-g + annotate("text", label="RS", y=-3, x=3.1, colour= "red", size =2)
+g<-g + annotate("text", label="RI", y=-3, x=1.7, colour= "red", size =2)
+g<-g+ annotate("text", label="LO", y=-3, x=-0.25, colour= "red", size =2)
+g<-g+ annotate("text", label="IT", y=-3, x=0.59, colour= "red", size =2)
+
+g<- g + geom_segment(aes(x = -6.5, y = -1.2, xend = -6.5, yend = -0.3), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -6.6, y = -0.9, xend = -6.6, yend = 0), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -6.7, y = -0.6, xend = -6.7, yend = 0.45), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -6.8, y = -0.1, xend = -6.8, yend = 0.98), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -6.9, y = 0.23, xend = -6.9, yend = 1.2), colour= "black", size =0.8)
+
+g<- g + geom_segment(aes(x = -2.7, y = -3.3, xend = -1.5, yend = -3.3), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -2.3, y = -3.4, xend = -0.25, yend = -3.4), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = -0.4, y = -3.5, xend = 0.91, yend = -3.5), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = 0.58, y = -3.6, xend = 1.93, yend = -3.6), colour= "black", size =0.8)
+g<- g + geom_segment(aes(x = 1.7, y = -3.7, xend = 3.32, yend = -3.7), colour= "black", size =0.8)
+
+
+           
+           
+           
 #para ver las diferentes variables
 faces2(datdig1.log, nrows=7)
 
