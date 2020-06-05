@@ -15,4 +15,8 @@ library(factoextra)#para poder aplicar el analisis de PCA
 
 library(clusterSim)
 
+library(ggbiplot)
+
+library(devtools)
+
 library(TeachingDemos) #para ver las caracteristicas de las variables independientes
