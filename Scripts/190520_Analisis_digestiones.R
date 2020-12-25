@@ -1,6 +1,9 @@
-setwd(dir="C:/Users/Aurelio Diaz/Documents/5_DOUTORADO/Bosques Ibéricos/Digestiones")
+getwd()
 
-datdig <- read.table("190520_Resultados_analisis.csv", sep = ";", header = T, dec = ",")
+setwd(dir="C:/Users/Aurelio Diaz/Documents/Onedrive_Aurelio/OneDrive/Doctorate/quercus_informations")
+
+datdig <- read_delim("Inputs_database/190520_Resultados_analisis.csv", 
+                     ";", escape_double = FALSE, trim_ws = TRUE)
 str(datdig)
 head(datdig)
 
@@ -14,7 +17,6 @@ str(datdig)
 #para crear una columna con las parcelas y provincias, le he metido el orden de las muestras 
 #para que no me de problemas despues en el nombre de las filas
 
-library(tidyverse)
 datdig1<-unite(datdig, Local, c(1:3), sep = " ", remove = TRUE)
 head(datdig1)
 str(datdig1)
@@ -28,8 +30,8 @@ rownames(datdig1)=datdig1$Local
 datdig1<-datdig1[,-(1:2)]
 head(datdig1)
 
-#realizamos una transformacion en los parámetros de mayores valores absolutos
-# asi al máximo del K, Ca y Mn se le retira el valor de cada muestra
+#realizamos una transformacion en los par?metros de mayores valores absolutos
+# asi al m?ximo del K, Ca y Mn se le retira el valor de cada muestra
 datdig1$K<-max(datdig1$K) -datdig1$K
 datdig1$Mg<-max(datdig1$Mg) -datdig1$Mg
 datdig1$Ca<-max(datdig1$Ca) -datdig1$Ca

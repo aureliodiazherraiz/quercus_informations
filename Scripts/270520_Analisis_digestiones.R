@@ -6,20 +6,32 @@
 ###The PCA analysis needed logistical tranformation
 
 getwd()
-setwd(dir="C:/Users/Aurelio Diaz/Documents/Onedrive_Aurelio/OneDrive/Doctorate/quercus_informations/Inputs_database")
+setwd(dir="C:/Users/Diego/OneDrive/Doctorate/quercus_informations/Inputs_database")
 
-datdig <- read.table("190520_Resultados_analisis.csv", sep = ";", header = T, dec = ",")
+datdig <- read_delim("190520_Resultados_analisis.csv", 
+                     ";", escape_double = FALSE, trim_ws = TRUE)
 str(datdig)
 head(datdig)
 
 #insert new dataframe with biomass informations
-plot30<-read.csv("plot30.csv")
+nir_qilex <- read_excel("nirs encinas/datos_encina_codificados_recortados.xlsx")
 
 #para poder juntar varias columnas las he de transformar pues los vectores factores no se juntan 
 #con otros por lo que hay que transformar a caracter los dos para despues juntarlos
-datdig$Provincia<-as.character(datdig$Provincia)
-datdig$Parcela<-as.character(datdig$Parcela)
-str(datdig)
+
+datdig$Provincia[datdig$Provincia=="Zamora"]<-7
+datdig$Provincia[datdig$Provincia=="Cadiz"]<-1
+datdig$Provincia[datdig$Provincia=="Cordoba"]<-2
+datdig$Provincia[datdig$Provincia=="Lugo"]<-3
+datdig$Provincia[datdig$Provincia=="Ourense"]<-4
+datdig$Provincia[datdig$Provincia=="Toledo"]<-5
+datdig$Provincia[datdig$Provincia=="Sevilla"]<-6
+
+datdig.class<-datdig$Provincia
+
+datdig<-datdig[,-(1:6)]
+
+
 
 #para crear una columna con las parcelas y provincias, le he metido el orden de las muestras 
 #para que no me de problemas despues en el nombre de las filas
@@ -28,53 +40,11 @@ head(datdig1)
 
 #cambiamos el nombre de las filas por la columa local previamente montada, 
 #no puede haber valores repetidos lo cual me ha complicado la vida.
-rownames(datdig1)=datdig1$Local
-head(datdig1)
-datdig1<-datdig1[,-(1:2)]
-head(datdig1)
-names(datdig1)
+rownames(datdig)=datdig$Cod_nir
 
-#analisis de anova
-#para eso el vector Parcela debe estar como caracter sino no lo separar? en niveles o factores
-#firstly we can study the nutrients graphics trough boxplot and after by histogram
-ggplot(data = datdig, aes(x = Parcela, y = P, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = K, fill = Parcela, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Ca, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Mg, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Na, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Mn, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Cu, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Fe, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
-ggplot(data = datdig, aes(x = Parcela, y = Zn, color = Parcela)) +
-  geom_boxplot() +
-  theme_bw()
 
-par(mfrow = c(3,3))
-hist(datdig$P)
-hist(datdig$Ca)
-hist(datdig$Mg)
-hist(datdig$K)
-hist(datdig$Na)
-hist(datdig$Mn)
-hist(datdig$Fe)
-hist(datdig$Cu)
-hist(datdig$Zn)
+
+##ANOVA para cada nutriente------
 
 #para poder aplicar un ANOVA se ha de verificar si cumple las siguientes condiciones 
 #Normalidad de la muestra, como en la muestra la variable tiene menos de 50 casos aplicaremos Shapiro Wilt (shapiro.test)
@@ -122,13 +92,13 @@ TukeyHSD(anova_one_Zn)
 boxplot(datdig$K~datdig$Parcela, col="red")
 boxplot(datdig$Zn~datdig$Parcela, col="yellow")
 
+
 #library(clusterSim) para normalizar y centrar las variables (scale & center)
 #datdig1.norm<-data.Normalization (datdig1,type="n1",normalization="column")
 #no ha funcionado por lo que aplicamos una transformacion en base logaritmica
 
-datdig1.log<-log(datdig1)
-head(datdig1.log)
-chart.Correlation(datdig1.log)
+datdig.log<-log(datdig)
+chart.Correlation(datdig.log)
 
 #mejora substancialmente la normalizacion de las variables a excepcion 
 #del P, Mn y Cu
@@ -142,16 +112,27 @@ lillie.test(datdig1.log$Fe)#cumple
 lillie.test(datdig1.log$Cu)#no cumple
 lillie.test(datdig1.log$Zn)#cumple 
 
-#PCA
+##PCA de los nutrientes por provincia----
 
 #vamos usar el codigo prcomp con las nuevas variables donde 
 #ha mejorado el % de los Pc
-res.pca<-prcomp(datdig1.log, scale=T, center = T)
+res.pca<-prcomp(datdig, scale=T, center = T)
 print(res.pca)
 summary(res.pca)
-plot(res.pca)
+biplot(res.pca)
 
-parce<-datdig$Parcela
+g = ggbiplot(res.pca, obs.scale = 1, 
+             var.scale = 1, groups = datdig.class,
+             ellipse = TRUE, circle = TRUE)
+g = g + scale_color_discrete(name = '') +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+print(g)
+
+
+
+
+
 
 ss<-get_eigenvalue(res.pca)
 var.contri<-get_pca_var(res.pca) ## variable contributioin to the PCA 
@@ -165,11 +146,11 @@ ind.contrib$contrib
 ind.contrib$coord
 ind.contrib$cos2
 
-ind.datdig1<-cbind(ind.contrib$coord, parce)
-ind.datdig1<-as.data.frame(ind.datdig1)
-ind.datdig1$parce<-as.factor(ind.datdig1$parce)
-ind.datdig1$Dim.1<-as.numeric((ind.datdig1$Dim.1))
-ind.datdig1$Dim.2<-as.numeric((ind.datdig1$Dim.2))
+ind.datdig<-cbind(ind.contrib$coord, parce)
+ind.datdig<-as.data.frame(ind.datdig)
+ind.datdig$parce<-as.factor(ind.datdig$parce)
+ind.datdig$Dim.1<-as.numeric((ind.datdig$Dim.1))
+ind.datdig$Dim.2<-as.numeric((ind.datdig$Dim.2))
 
 print(ind.datdig1)
 
