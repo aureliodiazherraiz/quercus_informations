@@ -17,6 +17,5 @@ library(clusterSim)#para normalizar y centrar las variables (scale & center)
 library(devtools)#grafica PCA
 library(ggbiplot)#grafica PCA
 
-library(vqv)#grafica PCA
 
 
