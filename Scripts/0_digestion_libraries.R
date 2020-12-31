@@ -14,6 +14,7 @@ library(PerformanceAnalytics) #para poder graficar las correlaciones entre varia
 library(factoextra)#para poder aplicar el analisis de PCA
 library(clusterSim)#para normalizar y centrar las variables (scale & center)
 
+library(remotes)#para instalar paquetes desde repositorios 
 library(devtools)#grafica PCA
 library(ggbiplot)#grafica PCA
 

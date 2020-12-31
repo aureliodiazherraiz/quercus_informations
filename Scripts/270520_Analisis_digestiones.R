@@ -7,6 +7,7 @@
 
 getwd()
 setwd(dir="C:/Users/Diego/OneDrive/Doctorate/quercus_informations/Inputs_database")
+setwd(dir="C:/Users/Onedrive_Aurelio/OneDrive/Doctorate/quercus_informations/Inputs_database")
 
 datdig <- read_delim("190520_Resultados_analisis.csv", 
                      ";", escape_double = FALSE, trim_ws = TRUE)
@@ -16,32 +17,22 @@ head(datdig)
 #insert new dataframe with biomass informations
 nir_qilex <- read_excel("nirs encinas/datos_encina_codificados_recortados.xlsx")
 
-#para poder juntar varias columnas las he de transformar pues los vectores factores no se juntan 
-#con otros por lo que hay que transformar a caracter los dos para despues juntarlos
-
-datdig$Provincia[datdig$Provincia=="Zamora"]<-7
-datdig$Provincia[datdig$Provincia=="Cadiz"]<-1
-datdig$Provincia[datdig$Provincia=="Cordoba"]<-2
-datdig$Provincia[datdig$Provincia=="Lugo"]<-3
-datdig$Provincia[datdig$Provincia=="Ourense"]<-4
-datdig$Provincia[datdig$Provincia=="Toledo"]<-5
-datdig$Provincia[datdig$Provincia=="Sevilla"]<-6
+#creamos un array con los nombres de las provincias para que las agrupe en el PCA
 
 datdig.class<-datdig$Provincia
+datdig.parce<-datdig$Parcela
 
-datdig<-datdig[,-(1:6)]
-
+datdig_pca<-datdig[,-(1:6)]
 
 
 #para crear una columna con las parcelas y provincias, le he metido el orden de las muestras 
 #para que no me de problemas despues en el nombre de las filas
-datdig1<-unite(datdig, Local, c(1:3), sep = " ", remove = TRUE)
-head(datdig1)
+#datdig1<-unite(datdig, Local, c(1:3), sep = " ", remove = TRUE)
+
 
 #cambiamos el nombre de las filas por la columa local previamente montada, 
 #no puede haber valores repetidos lo cual me ha complicado la vida.
-rownames(datdig)=datdig$Cod_nir
-
+#rownames(datdig)=datdig$Cod_nir
 
 
 ##ANOVA para cada nutriente------
@@ -112,6 +103,7 @@ lillie.test(datdig1.log$Fe)#cumple
 lillie.test(datdig1.log$Cu)#no cumple
 lillie.test(datdig1.log$Zn)#cumple 
 
+
 ##PCA de los nutrientes por provincia----
 
 #vamos usar el codigo prcomp con las nuevas variables donde 
@@ -129,39 +121,37 @@ g = g + scale_color_discrete(name = '') +
 
 print(g)
 
-
-
-
-
-
+#
 ss<-get_eigenvalue(res.pca)
-var.contri<-get_pca_var(res.pca) ## variable contributioin to the PCA 
-var.contri$contrib
-var.contri$coord
-var.contri$cos2
-var.contri$cor
+var.contri<-get_pca_var(res.pca) ## variable contribution to the PCA 
+summary(var.contri)
+var.contri$contrib %>% plot()
+var.contri$coord %>% plot()
+var.contri$cos2 %>% plot()
+var.contri$cor %>% plot()
 
 ind.contrib <- get_pca_ind(res.pca) ## Individual contribution to the PCA
-ind.contrib$contrib
-ind.contrib$coord
-ind.contrib$cos2
+ind.contrib$contrib %>% plot()
+ind.contrib$coord %>% plot()
+ind.contrib$cos2 %>% plot()
 
-ind.datdig<-cbind(ind.contrib$coord, parce)
+
+ind.datdig<-cbind(ind.contrib$coord, datdig.class)
 ind.datdig<-as.data.frame(ind.datdig)
-ind.datdig$parce<-as.factor(ind.datdig$parce)
+
+ind.datdig$datdig.class<-as.factor(ind.datdig$datdig.class)
 ind.datdig$Dim.1<-as.numeric((ind.datdig$Dim.1))
 ind.datdig$Dim.2<-as.numeric((ind.datdig$Dim.2))
 
-print(ind.datdig1)
+print(ind.datdig)
 
 #Anova between plots (ind) and pca 
-Anova.dim1<-aov(Dim.1~parce,data=ind.datdig1) #dim.1 like PCA1
+Anova.dim1<-aov(Dim.1~datdig.class,data=ind.datdig) #dim.1 like PCA1
 Anova.dim1
 
-str(ind.datdig1)
 summary(Anova.dim1)
 TukeyHSD(Anova.dim1)
-anova.groups.1<-HSD.test(Anova.dim1, "parce", group=TRUE)
+anova.groups.1<-HSD.test(Anova.dim1, "datdig.class", group=TRUE)
 anova.groups.1
 PCA1<-anova.groups.1$groups
 
